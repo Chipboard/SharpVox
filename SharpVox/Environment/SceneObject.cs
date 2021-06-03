@@ -7,27 +7,40 @@ namespace SharpVox.Environment
     public abstract class SceneObject
     {
         private readonly SceneData parentScene;
-        public int objectID;
+        public readonly uint objectID;
+
+        /// <summary>
+        /// Start is called when the object is first created.
+        /// </summary>
+        public abstract void Start();
 
         /// <summary>
         /// Update is called before every frame.
         /// </summary>
         public abstract void Update();
 
+        /// <summary>
+        /// Create a new sceneObject.
+        /// </summary>
         public SceneObject(SceneData scene = null)
         {
             if (scene != null)
             {
-                scene.Insert(this);
+                objectID = scene.Insert(this);
                 parentScene = scene;
             }
             else if (World.activeScene != null)
             {
-                World.activeScene.Insert(this);
+                objectID = World.activeScene.Insert(this);
                 parentScene = World.activeScene;
             }
             else
+            {
                 Console.WriteLine("Could not find scene for SceneObject!");
+                return;
+            }
+
+            Start();
         }
 
         ~SceneObject()

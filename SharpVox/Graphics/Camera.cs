@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using SFML.Graphics;
 using SFML.Graphics.Glsl;
+using SFML.Window;
 using SharpVox.Utilities;
 using SharpVox.Environment;
+using SharpVox.Input;
 
 namespace SharpVox.Graphics
 {
@@ -15,24 +17,52 @@ namespace SharpVox.Graphics
 
         public Vec3 up;
         public Vec3 forward;
-        public Vec3 backward;
         public Vec3 right;
-        public Vec3 left;
 
-        public Mat4 viewMatrix;
+        public override void Start()
+        {
+            target = new Vec3(position.X, position.Y, position.Z + 1);
+            up = new Vec3(0, 1, 0);
+
+            forward = VectorMath.Normalize(VectorMath.Subtract(target, position));
+        }
 
         public override void Update()
         {
-            backward = VectorMath.Subtract(position, target);
-            forward = VectorMath.Invert(backward);
-            up = new Vec3(0, 1, 0);
-            right = VectorMath.Normalize(VectorMath.Cross(up, backward));
-            left = VectorMath.Invert(right);
-            up = VectorMath.Cross(backward, right);
+            forward = VectorMath.Normalize(VectorMath.Subtract(VectorMath.Add(position, forward), position));
+            right = VectorMath.Cross(up, forward);
+            up = VectorMath.Cross(forward, right);
 
-            viewMatrix = new Mat4();
+            target = VectorMath.Add(position, forward);
 
-            Renderer.screenStates.Shader.SetUniform("camPos", new Vec3(0, 0, 0));
+            if (InputManager.GetKey(Keyboard.Key.W))
+            {
+                position = VectorMath.Add(position, VectorMath.Multiply(forward, Core.Program.deltaTime));
+                Console.WriteLine(position.X + " : " + position.Y + " : " + position.Z);
+            }
+
+            if (InputManager.GetKey(Keyboard.Key.S))
+            {
+                position = VectorMath.Add(position, VectorMath.Multiply(VectorMath.Invert(forward), Core.Program.deltaTime));
+                Console.WriteLine(position.X + " : " + position.Y + " : " + position.Z);
+            }
+
+            if (InputManager.GetKey(Keyboard.Key.D))
+            {
+                position = VectorMath.Add(position, VectorMath.Multiply(right, Core.Program.deltaTime));
+                Console.WriteLine(position.X + " : " + position.Y + " : " + position.Z);
+            }
+
+            if (InputManager.GetKey(Keyboard.Key.A))
+            {
+                position = VectorMath.Add(position, VectorMath.Multiply(VectorMath.Invert(right), Core.Program.deltaTime));
+                Console.WriteLine(position.X + " : " + position.Y + " : " + position.Z);
+            }
+
+            Renderer.screenStates.Shader.SetUniform("camPos", position);
+            Renderer.screenStates.Shader.SetUniform("camForward", forward);
+            Renderer.screenStates.Shader.SetUniform("camRight", right);
+            Renderer.screenStates.Shader.SetUniform("camUp", up);
         }
     }
 }

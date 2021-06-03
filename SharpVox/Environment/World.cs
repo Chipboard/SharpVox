@@ -9,6 +9,9 @@ namespace SharpVox.Environment
         public static List<SceneData> memoryScenes = new List<SceneData>();
         public static SceneData activeScene;
 
+        /// <summary>
+        /// Create a new scene.
+        /// </summary>
         public static SceneData CreateScene()
         {
             Console.WriteLine("Creating new scene");
@@ -16,10 +19,15 @@ namespace SharpVox.Environment
 
             if(activeScene == null)
                 ActivateScene(ref newScene);
+
+            new Graphics.Camera();
             
             return newScene;
         }
 
+        /// <summary>
+        /// Activate an existing scene.
+        /// </summary>
         public static void ActivateScene(ref SceneData scene)
         {
             Console.WriteLine("Activating scene");
@@ -43,6 +51,9 @@ namespace SharpVox.Environment
             activeScene = scene;
         }
 
+        /// <summary>
+        /// Remove a specified scene.
+        /// </summary>
         public static void RemoveScene(SceneData scene)
         {
             Console.WriteLine("Removing scene");
@@ -68,5 +79,3 @@ namespace SharpVox.Environment
         }
     }
 }
-
-//JFS 800-324-8680

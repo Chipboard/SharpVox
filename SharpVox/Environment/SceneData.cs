@@ -7,7 +7,7 @@ namespace SharpVox.Environment
 {
     public class SceneData
     {
-        public SceneObject[] sceneObjects;
+        public SceneObject[] sceneObjects = new SceneObject[0];
         public uint identificationCount;
 
 
@@ -64,7 +64,7 @@ namespace SharpVox.Environment
                 newSceneObjects[i] = sceneObjects[i];
             }
 
-            newSceneObjects[newLength] = sceneObject;
+            newSceneObjects[newLength-1] = sceneObject;
 
             sceneObjects = newSceneObjects;
 
@@ -74,7 +74,7 @@ namespace SharpVox.Environment
         /// <summary>
         /// Remove a sceneObject from the scene, based on its ID.
         /// </summary>
-        public bool Remove(int id)
+        public bool Remove(uint id)
         {
             int removalPosition = -1;
             for (int i = 0; i < sceneObjects.Length; i++)
@@ -95,6 +95,9 @@ namespace SharpVox.Environment
             }
         }
 
+        /// <summary>
+        /// SceneData constructor.
+        /// </summary>
         public SceneData()
         {
             if (World.activeScene == null)
