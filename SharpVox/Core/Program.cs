@@ -31,8 +31,6 @@ namespace SharpVox.Core
 
             InitWindow(VideoMode.DesktopMode.Width, VideoMode.DesktopMode.Height);
 
-            InputManager.SetCursorVisible(false);
-
             while (window.IsOpen)
             {
                 //Handle window events
@@ -45,7 +43,7 @@ namespace SharpVox.Core
                     World.CreateScene();
 
                 //Draw the scene
-                if(window.HasFocus())
+                //if(window.HasFocus())
                 Renderer.Render(window);
 
                 deltaTime = deltaClock.Restart().AsSeconds();
@@ -62,8 +60,12 @@ namespace SharpVox.Core
                 window = new RenderWindow(new VideoMode(pixelsX, pixelsY), "SharpVox");
                 window.KeyPressed += InputManager.KeyPressed;
                 window.KeyReleased += InputManager.KeyReleased;
+                window.MouseButtonPressed += InputManager.MouseButtonPressed;
+                window.MouseButtonReleased += InputManager.MouseButtonReleased;
+                window.MouseMoved += InputManager.MouseMoved;
                 window.Resized += OnWindowResized;
                 window.Closed += OnWindowClosed;
+                window.SetVerticalSyncEnabled(true);
             }
 
             InitRenderer();
@@ -78,14 +80,11 @@ namespace SharpVox.Core
         {
             if (Renderer.screenShape == null)
             {
-                Renderer.screenShape = new RectangleShape(new Vector2f(window.Size.X, window.Size.Y))
-                {
-                    Texture = new Texture(new Image("Images/BrDevBackdrop.png"))
-                };
+                Renderer.screenShape = new RectangleShape(new Vector2f(window.Size.X, window.Size.Y));
             }
 
             if(Renderer.screenStates.Shader == null)
-            Renderer.screenStates = new RenderStates(new Shader(null, null, "Shaders/Voxel.frag"));
+            Renderer.screenStates = new RenderStates(new Shader(null, null, "Shaders/Renderer.frag"));
 
             Renderer.screenStates.Shader.SetUniform("resolution", new Vec2(window.Size.X, window.Size.Y));
         }

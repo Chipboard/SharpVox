@@ -36,27 +36,27 @@ namespace SharpVox.Graphics
             target = VectorMath.Add(position, forward);
 
             if (InputManager.GetKey(Keyboard.Key.W))
-            {
                 position = VectorMath.Add(position, VectorMath.Multiply(forward, Core.Program.deltaTime));
-                Console.WriteLine(position.X + " : " + position.Y + " : " + position.Z);
-            }
 
             if (InputManager.GetKey(Keyboard.Key.S))
-            {
                 position = VectorMath.Add(position, VectorMath.Multiply(VectorMath.Invert(forward), Core.Program.deltaTime));
-                Console.WriteLine(position.X + " : " + position.Y + " : " + position.Z);
-            }
 
             if (InputManager.GetKey(Keyboard.Key.D))
-            {
                 position = VectorMath.Add(position, VectorMath.Multiply(right, Core.Program.deltaTime));
-                Console.WriteLine(position.X + " : " + position.Y + " : " + position.Z);
-            }
 
             if (InputManager.GetKey(Keyboard.Key.A))
-            {
                 position = VectorMath.Add(position, VectorMath.Multiply(VectorMath.Invert(right), Core.Program.deltaTime));
-                Console.WriteLine(position.X + " : " + position.Y + " : " + position.Z);
+
+            if (InputManager.GetMouseButton(Mouse.Button.Right))
+            {
+                InputManager.SetCursorVisible(false);
+                InputManager.CenterCursor();
+
+                forward = VectorMath.Add(forward, VectorMath.Multiply(right,InputManager.mouseMovementX * 0.001f));
+                forward = VectorMath.Add(forward, VectorMath.Multiply(up, -InputManager.mouseMovementY * 0.001f));
+            } else
+            {
+                InputManager.SetCursorVisible(true);
             }
 
             Renderer.screenStates.Shader.SetUniform("camPos", position);
