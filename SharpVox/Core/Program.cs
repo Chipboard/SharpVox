@@ -84,7 +84,7 @@ namespace SharpVox.Core
             }
 
             if(Renderer.screenStates.Shader == null)
-            Renderer.screenStates = new RenderStates(new Shader(null, null, "Shaders/Renderer.frag"));
+            Renderer.screenStates = new RenderStates(new Shader(null, null, "Graphics/Shaders/Renderer.frag"));
 
             Renderer.screenStates.Shader.SetUniform("resolution", new Vec2(window.Size.X, window.Size.Y));
         }
