@@ -21,10 +21,16 @@ namespace SharpVox.Graphics
 
         public override void Start()
         {
+            position = new Vec3(0, 0, -5);
             target = new Vec3(position.X, position.Y, position.Z + 1);
             up = new Vec3(0, 1, 0);
 
             forward = VectorMath.Normalize(VectorMath.Subtract(target, position));
+
+            Renderer.RegisterUniform("camPos", position);
+            Renderer.RegisterUniform("camForward", forward);
+            Renderer.RegisterUniform("camRight", right);
+            Renderer.RegisterUniform("camUp", up);
         }
 
         public override void Update()
@@ -52,17 +58,18 @@ namespace SharpVox.Graphics
                 InputManager.SetCursorVisible(false);
                 InputManager.CenterCursor();
 
-                forward = VectorMath.Add(forward, VectorMath.Multiply(right,InputManager.mouseMovementX * 0.001f));
+                forward = VectorMath.Add(forward, VectorMath.Multiply(right, InputManager.mouseMovementX * 0.001f));
                 forward = VectorMath.Add(forward, VectorMath.Multiply(up, -InputManager.mouseMovementY * 0.001f));
-            } else
+            }
+            else
             {
                 InputManager.SetCursorVisible(true);
             }
 
-            Renderer.screenStates.Shader.SetUniform("camPos", position);
-            Renderer.screenStates.Shader.SetUniform("camForward", forward);
-            Renderer.screenStates.Shader.SetUniform("camRight", right);
-            Renderer.screenStates.Shader.SetUniform("camUp", up);
+            Renderer.SetUniform("camPos", position);
+            Renderer.SetUniform("camForward", forward);
+            Renderer.SetUniform("camRight", right);
+            Renderer.SetUniform("camUp", up);
         }
     }
 }

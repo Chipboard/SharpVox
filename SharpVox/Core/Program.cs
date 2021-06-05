@@ -83,10 +83,41 @@ namespace SharpVox.Core
                 Renderer.screenShape = new RectangleShape(new Vector2f(window.Size.X, window.Size.Y));
             }
 
-            if(Renderer.screenStates.Shader == null)
-            Renderer.screenStates = new RenderStates(new Shader(null, null, "Graphics/Shaders/Renderer.frag"));
+            if (Renderer.renderPasses == null)
+            {
+                Renderer.renderPasses = new RenderPass[0];
 
-            Renderer.screenStates.Shader.SetUniform("resolution", new Vec2(window.Size.X, window.Size.Y));
+                //Main renderer
+                RenderPass rendererPass = new RenderPass(new RenderStates(new Shader(null, null, "Graphics/Shaders/Renderer.frag")),
+                    new RenderTexture(window.Size.X, window.Size.Y),
+                    new UniformData[] { new UniformData("camPos", UniformType.Vec3),
+                        new UniformData("camForward", UniformType.Vec3),
+                        new UniformData("camRight", UniformType.Vec3),
+                        new UniformData("camUp", UniformType.Vec3),
+                        new UniformData("frame", UniformType.Int)}, null, false);
+
+                rendererPass.renderStates.Shader.SetUniform("noiseTexture", new Texture("Graphics/Images/Noise/Noise.png") { Repeated = true, Smooth = false });
+                rendererPass.renderStates.Shader.SetUniform("skyTexture", new Texture("Graphics/Images/Sky/immenstadter_horn_8k.hdr") { Repeated = true, Smooth = true });
+                Renderer.AddPass(rendererPass);
+
+                //Anti Aliasing
+                RenderPass aliasingPass = new RenderPass(new RenderStates(new Shader(null, null, "Graphics/Shaders/AntiAliasing.frag")),
+                    new RenderTexture(window.Size.X, window.Size.Y), new UniformData[] { new UniformData("frame", UniformType.Int) }, new int[] { 0, 1 }, false);
+                Renderer.AddPass(aliasingPass);
+
+                //Noise
+                RenderPass noisePass = new RenderPass(new RenderStates(new Shader(null, null, "Graphics/Shaders/Noise.frag")),
+                    new RenderTexture(window.Size.X, window.Size.Y),
+                    new UniformData[] { new UniformData("camForward", UniformType.Vec3),
+                    new UniformData("camPos", UniformType.Vec3)}, new int[] { 1 }, true);
+                noisePass.renderStates.Shader.SetUniform("noiseTexture", new Texture("Graphics/Images/Noise/Noise.png") { Repeated = true, Smooth = true });
+                Renderer.AddPass(noisePass);
+            }
+
+            Renderer.ResizeRenderPass(ref Renderer.renderPasses[0], window.Size.X, window.Size.Y);
+            Renderer.ResizeRenderPass(ref Renderer.renderPasses[1], window.Size.X, window.Size.Y);
+            Renderer.ResizeRenderPass(ref Renderer.renderPasses[2], window.Size.X, window.Size.Y);
+            Renderer.RegisterUniform("frame", 0);
         }
 
         /// <summary>

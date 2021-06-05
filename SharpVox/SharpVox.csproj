@@ -10,6 +10,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Graphics\Images\Noise\Noise.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Graphics\Images\Sky\immenstadter_horn_8k.hdr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Graphics\Images\Sky\lilienstein_16k.hdr">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Graphics\Shaders\AntiAliasing.frag">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Graphics\Shaders\Noise.frag">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Update="Graphics\Shaders\Renderer.frag">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
