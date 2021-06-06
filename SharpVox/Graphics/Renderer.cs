@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using SFML.Window;
 using SFML.Graphics;
 using SFML.Graphics.Glsl;
+using OpenTK.Graphics.OpenGL;
 
 namespace SharpVox.Graphics
 {
@@ -127,6 +129,11 @@ namespace SharpVox.Graphics
 
             ResizeRenderStates(ref renderPass.renderStates, width, height);
         }
+
+        public static void SetUniformArray(object uniform, int length)
+        {
+
+        }
     }
 
     public class RenderPass
@@ -180,6 +187,24 @@ namespace SharpVox.Graphics
             renderTexture.Dispose();
         }
     }
+
+    /*public struct ShapeData
+    {
+        readonly Sphere[] spheres;
+
+        public ShapeData(Sphere[] shapes)
+        {
+            spheres = shapes;
+        }
+    }
+
+    public struct Sphere
+    {
+        Vec3 pos;
+        Vec4 color;
+        float radius;
+        bool used;
+    };*/
 
     public struct UniformData
     {

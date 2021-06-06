@@ -2,10 +2,10 @@
 using SFML.System;
 using SFML.Window;
 using SFML.Graphics;
-using SFML.Graphics.Glsl;
 using SharpVox.Graphics;
 using SharpVox.Environment;
 using SharpVox.Input;
+using OpenTK.Windowing.Desktop;
 
 namespace SharpVox.Core
 {
@@ -57,7 +57,11 @@ namespace SharpVox.Core
         {
             if (window == null)
             {
-                window = new RenderWindow(new VideoMode(pixelsX, pixelsY), "SharpVox");
+                /*GameWindow Window = new GameWindow(
+                    new GameWindowSettings() { IsMultiThreaded = true, RenderFrequency = 120, UpdateFrequency = 120 },
+                    new NativeWindowSettings() { API = OpenTK.Windowing.Common.ContextAPI.OpenGL, AutoLoadBindings = true });*/
+
+                window = new RenderWindow(new VideoMode(pixelsX, pixelsY), "SharpVox", Styles.Default, new ContextSettings(0, 0, 4, 1, 1, ContextSettings.Attribute.Default, false));
                 window.KeyPressed += InputManager.KeyPressed;
                 window.KeyReleased += InputManager.KeyReleased;
                 window.MouseButtonPressed += InputManager.MouseButtonPressed;
@@ -112,6 +116,11 @@ namespace SharpVox.Core
                     new UniformData("camPos", UniformType.Vec3)}, new int[] { 1 }, true);
                 noisePass.renderStates.Shader.SetUniform("noiseTexture", new Texture("Graphics/Images/Noise/Noise.png") { Repeated = true, Smooth = true });
                 Renderer.AddPass(noisePass);
+
+                //Shapes
+                //apeData shapeData = new ShapeData(new Sphere[10000]);
+                //nderer.renderPasses[0].renderStates.Shader.
+                
             }
 
             Renderer.ResizeRenderPass(ref Renderer.renderPasses[0], window.Size.X, window.Size.Y);

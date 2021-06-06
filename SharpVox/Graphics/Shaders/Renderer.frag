@@ -11,65 +11,143 @@ uniform int frame;
 const float c_goldenRatioConjugate = 0.61803398875;
 const float PI = 3.14159265359;
 const float maxDist = 500;
-const int maxBounces = 2;
+const int maxBounces = 3;
 const float epsilon = 0.001;
 
-struct ray {
+struct Ray {
     vec3 pos;
     vec3 dir;
     vec4 color;
     int bounces;
 };
 
-vec3 projection (vec2 p) {
+struct RayHit {
+    vec3 dist;
+    vec3 position;
+    vec3 normal;
+    vec3 albedo;
+    vec3 specular;
+};
+
+struct Sphere {
+    vec3 pos;
+    vec4 color;
+    float radius;
+    bool used;
+};
+
+struct ShapeData {
+    Sphere[10000] spheres;
+};
+uniform ShapeData shapeHolder;
+
+vec3 Projection (vec2 p) {
   return normalize(vec3(p.x, p.y, 0));
 }
 
-float sdSphere(vec3 p, vec3 center, float radius)
+float SdSphere(vec3 p, vec3 center, float radius, vec3 dir)
 {
-  return length(center - p) - radius;
+    if(dot(normalize(center - p), dir) > radius)
+        return maxDist;
+
+    return length(center - p) - radius;
 }
 
-ray createCamRay(vec2 uv, vec3 lookAt, float zoom)
+float OptSphere(vec3 pos, vec3 dir, float radius)
+{
+    vec3 d = pos - vec3(0,0,0);
+    float p1 = -dot(dir, d);
+    float p2sqr = p1 * p1 - dot(d, d) + radius * radius;
+    if (p2sqr < 0)
+        return maxDist;
+
+        return p2sqr;
+}
+
+float FracSphere(vec3 p, float r)
+{
+    //normalize(pos - center) - radius
+    p = (mod(abs(p), 1.0)) - vec3(0.5, 0.5, 0.5);
+    return length(p) - r;
+}
+
+#define SCALE 2.8
+#define MINRAD2 .25
+float minRad2 = clamp(MINRAD2, 1.0e-9, 1.0);
+#define scale (vec4(SCALE, SCALE, SCALE, abs(SCALE)) / minRad2)
+float absScalem1 = abs(SCALE - 1.0);
+float AbsScaleRaisedTo1mIters = pow(abs(SCALE), float(1-10));
+float Map(vec3 pos) 
+{
+	
+	vec4 p = vec4(pos,1);
+	vec4 p0 = p;  // p.w is the distance estimate
+
+	for (int i = 0; i < 9; i++)
+	{
+		p.xyz = clamp(p.xyz, -1.0, 1.0) * 2.0 - p.xyz;
+
+		float r2 = dot(p.xyz, p.xyz);
+		p *= clamp(max(minRad2/r2, minRad2), 0.0, 1.0);
+
+		// scale, translate
+		p = p*scale + p0;
+	}
+	return ((length(p.xyz) - absScalem1) / p.w - AbsScaleRaisedTo1mIters);
+}
+
+
+Ray CreateCamRay(vec2 uv, vec3 lookAt, float zoom)
 {
     vec3 c=camPos+camForward*zoom;
     vec3 i=c+uv.x*camRight+uv.y*camUp;
     vec3 dir=normalize(i-camPos);
-    return ray(camPos,dir,vec4(0,0,0,1), 0);
+    return Ray(camPos,dir,vec4(0,0,0,1), 0);
 }
 
-float distToScene(vec3 p)
+float DistToScene(vec3 pos, vec3 dir)
 {
-    float dist = 90000;
+    float dist = maxDist;
+
     for(int x = 0; x < 2; x++)
     {
         for(int y = 0; y < 2; y++)
         {
             for(int z = 0; z < 2; z++)
             {
-                dist = min(dist, sdSphere(p, vec3(x*4,y*4,z*4), 1));
+                dist = min(dist, SdSphere(pos, vec3(x*4,y*4,z*4), 1, dir));
             }
         }
     }
 
+    //dist = mod(Map(sin(pos)), 1) - 0.01;
+
+    //dist = min(dist, SdSphere(pos, vec3(0,0,0), 1, dir));
+    //dist = min(dist, FracSphere(pos, 0.25));
+    //dist = min(dist, OptSphere(pos, dir, 1));
+
     return dist;
 }
 
-const float EPS=0.001;
-vec3 estimateNormal(vec3 p){
-    float xPl=distToScene(vec3(p.x+EPS,p.y,p.z));
-    float xMi=distToScene(vec3(p.x-EPS,p.y,p.z));
-    float yPl=distToScene(vec3(p.x,p.y+EPS,p.z));
-    float yMi=distToScene(vec3(p.x,p.y-EPS,p.z));
-    float zPl=distToScene(vec3(p.x,p.y,p.z+EPS));
-    float zMi=distToScene(vec3(p.x,p.y,p.z-EPS));
+vec3 EstimateNormal(Ray camRay){
+    float xPl=DistToScene(vec3(camRay.pos.x+epsilon,camRay.pos.y,camRay.pos.z), camRay.dir);
+    float xMi=DistToScene(vec3(camRay.pos.x-epsilon,camRay.pos.y,camRay.pos.z), camRay.dir);
+    float yPl=DistToScene(vec3(camRay.pos.x,camRay.pos.y+epsilon,camRay.pos.z), camRay.dir);
+    float yMi=DistToScene(vec3(camRay.pos.x,camRay.pos.y-epsilon,camRay.pos.z), camRay.dir);
+    float zPl=DistToScene(vec3(camRay.pos.x,camRay.pos.y,camRay.pos.z+epsilon), camRay.dir);
+    float zMi=DistToScene(vec3(camRay.pos.x,camRay.pos.y,camRay.pos.z-epsilon), camRay.dir);
     float xDiff=xPl-xMi;
     float yDiff=yPl-yMi;
     float zDiff=zPl-zMi;
     return normalize(vec3(xDiff,yDiff,zDiff));
 }
 
-vec4 GetSky(ray camRay)
+vec3 CheapNormal( Ray camRay)
+{
+    return -camRay.dir;
+}
+
+vec4 GetSky(Ray camRay)
 {
     //Sample Skybox
     float theta = acos(camRay.dir.y) / -PI;
@@ -86,34 +164,48 @@ void main()
     float startRayOffset = texture(noiseTexture, uv * frame / 1024.0f).r;
     startRayOffset = fract(startRayOffset + frame * c_goldenRatioConjugate)*0.314;
 
-    bool hit;
-	ray camRay = createCamRay(uv, vec3(0,0,0), 1);
-    camRay.pos += camRay.dir * startRayOffset;
+	Ray camRay = CreateCamRay(uv, vec3(0,0,0), 1);
+    camRay.pos += camRay.dir * (startRayOffset + epsilon);
 
-	for(int i = 0; i < 100; i++)
-	{
-		float dist = distToScene(camRay.pos);
-		
-        if(dist > maxDist)
+    bool hit = false;
+    float dist = maxDist;
+    float minDist = maxDist;
+	for(int i = 0; i < 1000; i++)
+	{		
+        dist = DistToScene(camRay.pos, camRay.dir);
+        minDist = min(minDist, dist);
+
+        if(dist >= maxDist)
             break;
 
-		if(dist < 0.001){
-            camRay.dir = reflect(camRay.dir, estimateNormal(camRay.pos));
-			camRay.color = vec4(1,1,1,1) * camRay.color.w;
-            camRay.color.w -= 0.2;
+		if(dist < epsilon)
+        {
+            if(camRay.color.w > epsilon && camRay.bounces < maxBounces)
+            {
+                camRay.dir = reflect(camRay.dir, EstimateNormal(camRay));
+			    camRay.color = mix(camRay.color, vec4(sin(camRay.pos) + vec3(0.1,0.1,0.1),1), camRay.color.w);
+                camRay.color.w *= 0.5;
+                camRay.bounces++;
 
-            if(camRay.bounces > maxBounces)
+                camRay.pos += camRay.dir * (dist + epsilon);
+            } else {
+                hit = true;
                 break;
-
-            camRay.pos += camRay.dir * (dist + epsilon);
+            }
 		}
 
 		camRay.pos += camRay.dir * dist;
 	}
 
-    if (!hit)
+    //distance based fog
+   /* float distFactor = max(0, 0.9 - (minDist * 0.1));
+    camRay.color = mix(camRay.color, vec4(vec3(0.5,0.6,0.7), 1), distFactor);
+    camRay.color.w -= distFactor;*/
+
+    if(!hit)
     {
-        camRay.color += GetSky(camRay) * camRay.color.w;
+        //sky
+        camRay.color = mix(camRay.color, GetSky(camRay), camRay.color.w);
     }
 
 	gl_FragColor = vec4(camRay.color.xyz, 1);

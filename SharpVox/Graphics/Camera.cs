@@ -18,6 +18,7 @@ namespace SharpVox.Graphics
         public Vec3 up;
         public Vec3 forward;
         public Vec3 right;
+        public float camSpeed = 4;
 
         public override void Start()
         {
@@ -42,16 +43,16 @@ namespace SharpVox.Graphics
             target = VectorMath.Add(position, forward);
 
             if (InputManager.GetKey(Keyboard.Key.W))
-                position = VectorMath.Add(position, VectorMath.Multiply(forward, Core.Program.deltaTime));
+                position = VectorMath.Add(position, VectorMath.Multiply(forward, Core.Program.deltaTime * camSpeed));
 
             if (InputManager.GetKey(Keyboard.Key.S))
-                position = VectorMath.Add(position, VectorMath.Multiply(VectorMath.Invert(forward), Core.Program.deltaTime));
+                position = VectorMath.Add(position, VectorMath.Multiply(VectorMath.Invert(forward), Core.Program.deltaTime * camSpeed));
 
             if (InputManager.GetKey(Keyboard.Key.D))
-                position = VectorMath.Add(position, VectorMath.Multiply(right, Core.Program.deltaTime));
+                position = VectorMath.Add(position, VectorMath.Multiply(right, Core.Program.deltaTime * camSpeed));
 
             if (InputManager.GetKey(Keyboard.Key.A))
-                position = VectorMath.Add(position, VectorMath.Multiply(VectorMath.Invert(right), Core.Program.deltaTime));
+                position = VectorMath.Add(position, VectorMath.Multiply(VectorMath.Invert(right), Core.Program.deltaTime * camSpeed));
 
             if (InputManager.GetMouseButton(Mouse.Button.Right))
             {
