@@ -23,7 +23,7 @@ namespace SharpVox.Core
             if (args.Length > 0)
             {
                 Console.WriteLine("Program started with args:");
-                for(int i = 0; i < args.Length; i++)
+                for (int i = 0; i < args.Length; i++)
                 {
                     Console.WriteLine(args[i]);
                 }
@@ -56,10 +56,13 @@ namespace SharpVox.Core
         /// <summary>
         /// Initialize the main window of the program.
         /// </summary>
-        static RenderWindow InitWindow(uint pixelsX, uint pixelsY)
+        public static RenderWindow InitWindow(uint pixelsX, uint pixelsY, bool hardReset = false)
         {
-            if (window == null)
+            if (window == null || hardReset)
             {
+                if (window != null)
+                    window.Dispose();
+
                 /*GameWindow Window = new GameWindow(
                     new GameWindowSettings() { IsMultiThreaded = true, RenderFrequency = 120, UpdateFrequency = 120 },
                     new NativeWindowSettings() { API = OpenTK.Windowing.Common.ContextAPI.OpenGL, AutoLoadBindings = true });*/
@@ -76,7 +79,7 @@ namespace SharpVox.Core
                 window.SetVerticalSyncEnabled(true);
             }
 
-            InitRenderer();
+            InitRenderer(hardReset);
 
             return window;
         }
@@ -84,8 +87,16 @@ namespace SharpVox.Core
         /// <summary>
         /// Initialize the renderer.
         /// </summary>
-        public static void InitRenderer()
+        public static void InitRenderer(bool hardReset = false)
         {
+            if (hardReset)
+            {
+                if (Renderer.screenShape != null)
+                    Renderer.screenShape.Dispose();
+
+                Renderer.DisposeRenderPasses();
+            }
+
             if (Renderer.screenShape == null)
             {
                 Renderer.screenShape = new RectangleShape(new Vector2f(window.Size.X, window.Size.Y));
@@ -106,11 +117,15 @@ namespace SharpVox.Core
 
                 rendererPass.renderStates.Shader.SetUniform("noiseTexture", new Texture("Graphics/Images/Noise/Noise.png") { Repeated = true, Smooth = false });
                 rendererPass.renderStates.Shader.SetUniform("skyTexture", new Texture("Graphics/Images/Sky/immenstadter_horn_8k.hdr") { Repeated = true, Smooth = true });
+                rendererPass.renderStates.Shader.SetUniform("epsilon", 0.001f);
+                rendererPass.renderStates.Shader.SetUniform("maxBounces", 3);
+                rendererPass.renderStates.Shader.SetUniform("maxIterations", 250);
                 Renderer.AddPass(rendererPass);
 
                 //Anti Aliasing
                 RenderPass aliasingPass = new RenderPass(new RenderStates(new Shader(null, null, "Graphics/Shaders/AntiAliasing.frag")),
                     new RenderTexture(window.Size.X, window.Size.Y), new UniformData[] { new UniformData("frame", UniformType.Int) }, new int[] { 0, 1 }, false);
+                aliasingPass.renderStates.Shader.SetUniform("blendFactor", 0.33f);
                 Renderer.AddPass(aliasingPass);
 
                 //Noise
@@ -124,7 +139,7 @@ namespace SharpVox.Core
                 //Shapes
                 //apeData shapeData = new ShapeData(new Sphere[10000]);
                 //nderer.renderPasses[0].renderStates.Shader.
-                
+
             }
 
             Renderer.ResizeRenderPass(ref Renderer.renderPasses[0], window.Size.X, window.Size.Y);

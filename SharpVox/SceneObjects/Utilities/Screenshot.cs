@@ -22,24 +22,55 @@ namespace SharpVox.Utilities
         {
             if(InputManager.GetKey(Keyboard.Key.LControl) && InputManager.GetKeyDown(Keyboard.Key.P))
             {
-                Texture screenTexture = new Texture(Program.window.Size.X, Program.window.Size.Y);
-                screenTexture.Update(Program.window);
-                Image screenshot = screenTexture.CopyToImage();
-
-                if (!Directory.Exists("Screenshots/"))
-                    Directory.CreateDirectory("Screenshots/");
-
-                int index = 0;
-                while(File.Exists("Screenshots/Screenshot_" + index + ".jpg"))
+                if (InputManager.GetKey(Keyboard.Key.P))
                 {
-                    index++;
+                    //High detail screenshot or regular screenshot?
+                    if (InputManager.GetKey(Keyboard.Key.LShift))
+                    {
+                        //High detail
+                        Renderer.renderPasses[0].renderStates.Shader.SetUniform("epsilon", 0.0001f);
+                        Renderer.renderPasses[0].renderStates.Shader.SetUniform("maxBounces", 1000);
+                        Renderer.renderPasses[0].renderStates.Shader.SetUniform("maxIterations", 2000);
+                        Renderer.renderPasses[1].renderStates.Shader.SetUniform("blendFactor", 0.9f);
+
+                        for(int i = 0; i < 100; i++)
+                        {
+                            Renderer.Render(Program.window);
+                        }
+
+                        DoScreenshot();
+
+                        Renderer.renderPasses = null;
+                        Program.InitRenderer();
+                    } else
+                    {
+                        //Regular
+                        DoScreenshot();
+                    }
                 }
-
-                screenshot.SaveToFile("Screenshots/Screenshot_" + index + ".jpg");
-
-                screenTexture.Dispose();
-                screenshot.Dispose();
             }
+        }
+
+        public void DoScreenshot()
+        {
+            Texture screenTexture = new Texture(Program.window.Size.X, Program.window.Size.Y);
+            screenTexture.Update(Program.window);
+            Image screenshot = screenTexture.CopyToImage();
+
+            if (!Directory.Exists("Screenshots/"))
+                Directory.CreateDirectory("Screenshots/");
+
+            int index = 0;
+            while (File.Exists("Screenshots/Screenshot_" + index + ".jpg"))
+            {
+                index++;
+            }
+
+            screenshot.SaveToFile("Screenshots/Screenshot_" + index + ".jpg");
+            Console.WriteLine("Wrote screenshot: Screenshot_" + index + ".jpg");
+
+            screenTexture.Dispose();
+            screenshot.Dispose();
         }
     }
 }

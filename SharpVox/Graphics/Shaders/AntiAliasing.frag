@@ -3,6 +3,8 @@ uniform sampler2D renderTexture1;
 uniform vec2 resolution;
 uniform int frame;
 
+uniform float blendFactor;
+
 void edgeDetect(inout vec4 n[9], sampler2D tex, vec2 coord)
 {
 	float w = 1.0 / resolution.x;
@@ -58,5 +60,5 @@ void main()
 	//Blending
 	vec4 blend = mix(sampleJitter(uv, 10, (0.75-intensity)*0.002), texture(renderTexture0, uv), clamp(0,1,0.75-intensity));
 
-  gl_FragColor = mix(blend, texture(renderTexture1, uv), 0.25);
+  gl_FragColor = mix(blend, texture(renderTexture1, uv), blendFactor);
 }

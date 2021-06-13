@@ -11,8 +11,10 @@ uniform int frame;
 const float c_goldenRatioConjugate = 0.61803398875;
 const float PI = 3.14159265359;
 const float maxDist = 500;
-const int maxBounces = 3;
-const float epsilon = 0.001;
+
+uniform int maxIterations;
+uniform int maxBounces;
+uniform float epsilon;
 
 struct Ray {
     vec3 pos;
@@ -165,7 +167,7 @@ vec3 EstimateNormal(Ray camRay){
 vec3 EstimateNormalCheap(Ray camRay)
 {
     float d0 = DistToScene(camRay.pos, camRay.dir);
-    const vec2 epsilon = vec2(epsilon,0);
+    vec2 epsilon = vec2(epsilon,0);
     vec3 d1 = vec3(
         DistToScene(camRay.pos-epsilon.xyy, camRay.dir),
         DistToScene(camRay.pos-epsilon.yxy, camRay.dir),
@@ -197,7 +199,7 @@ void main()
     bool hit = false;
     float dist = maxDist;
     float minDist = maxDist;
-	for(int i = 0; i < 250; i++)
+	for(int i = 0; i < maxIterations; i++)
 	{		
         dist = DistToScene(camRay.pos, camRay.dir);
 		
@@ -214,7 +216,7 @@ void main()
         {
             if(camRay.color.w > 0.001 && camRay.bounces < maxBounces)
             {
-                camRay.dir = reflect(camRay.dir, EstimateNormalCheap(camRay));
+                camRay.dir = reflect(camRay.dir, EstimateNormalCheap(camRay) * (1 + (startRayOffset * 0.1)));
 			    camRay.color = mix(camRay.color, vec4((sin(camRay.pos) + vec3(0.1,0.1,0.1)),1), camRay.color.w);
                 camRay.color.w *= 0.25;
                 camRay.bounces++;

@@ -130,6 +130,23 @@ namespace SharpVox.Graphics
             ResizeRenderStates(ref renderPass.renderStates, width, height);
         }
 
+        public static void DisposeRenderPasses()
+        {
+            for(int i = 0; i < renderPasses.Length; i++)
+            {
+                if (renderPasses[i].renderStates.Shader != null)
+                    renderPasses[i].renderStates.Shader.Dispose();
+
+                if (renderPasses[i].renderStates.Texture != null)
+                    renderPasses[i].renderStates.Shader.Dispose();
+
+                if (renderPasses[i].renderTexture != null)
+                    renderPasses[i].renderTexture.Dispose();
+            }
+
+            renderPasses = null;
+        }
+
         public static void SetUniformArray(object uniform, int length)
         {
 
