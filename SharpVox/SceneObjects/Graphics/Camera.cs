@@ -22,7 +22,7 @@ namespace SharpVox.Graphics
 
         public override void Start()
         {
-            position = new Vec3(0, 0, -5);
+            position = new Vec3(0, 1, -5);
             target = new Vec3(position.X, position.Y, position.Z + 1);
             up = new Vec3(0, 1, 0);
 
@@ -66,6 +66,9 @@ namespace SharpVox.Graphics
             {
                 InputManager.SetCursorVisible(true);
             }
+
+            if(InputManager.mouseScroll != 0)
+                camSpeed = Math.Clamp(camSpeed + (InputManager.mouseScroll * 0.1f), 0, 10);
 
             Renderer.SetUniform("camPos", position);
             Renderer.SetUniform("camForward", forward);

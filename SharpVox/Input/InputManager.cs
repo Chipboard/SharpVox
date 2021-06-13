@@ -9,10 +9,12 @@ namespace SharpVox.Input
 {
     class InputManager
     {
+        public static Dictionary<Keyboard.Key, bool> downKeys = new Dictionary<Keyboard.Key, bool>();
         public static Dictionary<Keyboard.Key, bool> keys = new Dictionary<Keyboard.Key, bool>();
         public static Dictionary<Mouse.Button, bool> mouseButtons = new Dictionary<Mouse.Button, bool>();
         public static int mousePositionX, mousePositionY, mouseMovementX, mouseMovementY;
         public static int mouseMovementCorrectionX, mouseMovementCorrectionY;
+        public static float mouseScroll;
 
         /// <summary>
         /// Get mouse movement.
@@ -26,15 +28,40 @@ namespace SharpVox.Input
             mousePositionY = e.Y;
         }
 
+        public static void MouseScrolled(object sender, MouseWheelScrollEventArgs e)
+        {
+            mouseScroll = e.Delta;
+        }
+
         /// <summary>
         /// Add key to list of pressed keys.
         /// </summary>
         public static void KeyPressed(object sender, KeyEventArgs e)
         {
-            if (!keys.ContainsKey(e.Code))
-                keys.Add(e.Code, true);
+            if (!GetKey(e.Code))
+            {
+                RegisterKey(e.Code, true);
+                RegisterKeyDown(e.Code, true);
+            } else
+            {
+                RegisterKeyDown(e.Code, false);
+            }
+        }
+
+        public static void RegisterKeyDown(Keyboard.Key key, bool value)
+        {
+            if (!downKeys.ContainsKey(key))
+                downKeys.Add(key, value);
             else
-                keys[e.Code] = true;
+                downKeys[key] = value;
+        }
+
+        public static void RegisterKey(Keyboard.Key key, bool value)
+        {
+            if (!keys.ContainsKey(key))
+                keys.Add(key, value);
+            else
+                keys[key] = value;
         }
 
         /// <summary>
@@ -65,7 +92,7 @@ namespace SharpVox.Input
         }
 
         /// <summary>
-        /// Check if key was pressed this frame.
+        /// Check if key was held this frame.
         /// </summary>
         public static bool GetKey(Keyboard.Key key)
         {
@@ -73,6 +100,17 @@ namespace SharpVox.Input
                 return false;
 
             return keys[key];
+        }
+
+        /// <summary>
+        /// Check if key was pressed down this frame.
+        /// </summary>
+        public static bool GetKeyDown(Keyboard.Key key)
+        {
+            if (!downKeys.ContainsKey(key))
+                return false;
+
+            return downKeys[key];
         }
 
         /// <summary>
@@ -120,6 +158,12 @@ namespace SharpVox.Input
             Mouse.SetPosition(new Vector2i((int)Program.window.Size.X/2, (int)Program.window.Size.Y/2), Program.window);
             mouseMovementCorrectionX = (int)(mousePositionX - (Program.window.Size.X / 2));
             mouseMovementCorrectionY = (int)(mousePositionY - (Program.window.Size.Y / 2));
+        }
+
+        public static void Reset()
+        {
+            downKeys.Clear();
+            mouseScroll = 0;
         }
     }
 }

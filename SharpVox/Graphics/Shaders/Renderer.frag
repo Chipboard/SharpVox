@@ -96,6 +96,24 @@ float Map(vec3 pos)
 	return ((length(p.xyz) - absScalem1) / p.w - AbsScaleRaisedTo1mIters);
 }
 
+float Map2( vec3 p, float s )
+{
+	float cscale = 1;
+	
+	for( int i=0; i<8;i++ )
+	{
+		p = -1.0 + 2.0*fract(0.5*p+0.5);
+
+		float r2 = dot(p,p);
+		
+		float k = s/r2;
+		p *= k;
+		cscale *= k;
+	}
+	
+	return 0.25*abs(p.y)/cscale;
+}
+
 
 Ray CreateCamRay(vec2 uv, vec3 lookAt, float zoom)
 {
@@ -109,7 +127,7 @@ float DistToScene(vec3 pos, vec3 dir)
 {
     float dist = maxDist;
 
-    for(int x = 0; x < 2; x++)
+    /*for(int x = 0; x < 2; x++)
     {
         for(int y = 0; y < 2; y++)
         {
@@ -118,13 +136,15 @@ float DistToScene(vec3 pos, vec3 dir)
                 dist = min(dist, SdSphere(pos, vec3(x*4,y*4,z*4), 1, dir));
             }
         }
-    }
+    }*/
 
     //dist = mod(Map(sin(pos)), 1) - 0.01;
 
     //dist = min(dist, SdSphere(pos, vec3(0,0,0), 1, dir));
     //dist = min(dist, FracSphere(pos, 0.25));
     //dist = min(dist, OptSphere(pos, dir, 1));
+    //dist = Map2(pos, 1.525);
+    dist = Map(pos);
 
     return dist;
 }
@@ -142,9 +162,15 @@ vec3 EstimateNormal(Ray camRay){
     return normalize(vec3(xDiff,yDiff,zDiff));
 }
 
-vec3 CheapNormal( Ray camRay)
+vec3 EstimateNormalCheap(Ray camRay)
 {
-    return -camRay.dir;
+    float d0 = DistToScene(camRay.pos, camRay.dir);
+    const vec2 epsilon = vec2(epsilon,0);
+    vec3 d1 = vec3(
+        DistToScene(camRay.pos-epsilon.xyy, camRay.dir),
+        DistToScene(camRay.pos-epsilon.yxy, camRay.dir),
+        DistToScene(camRay.pos-epsilon.yyx, camRay.dir));
+    return normalize(d0 - d1);
 }
 
 vec4 GetSky(Ray camRay)
@@ -162,29 +188,35 @@ void main()
 
     // blue noise
     float startRayOffset = texture(noiseTexture, uv * frame / 1024.0f).r;
-    startRayOffset = fract(startRayOffset + frame * c_goldenRatioConjugate)*0.314;
+    startRayOffset = fract(startRayOffset + frame * c_goldenRatioConjugate)*0.0314;
 
 	Ray camRay = CreateCamRay(uv, vec3(0,0,0), 1);
+    vec3 originalPos = camRay.pos;
     camRay.pos += camRay.dir * (startRayOffset + epsilon);
 
     bool hit = false;
     float dist = maxDist;
     float minDist = maxDist;
-	for(int i = 0; i < 1000; i++)
+	for(int i = 0; i < 250; i++)
 	{		
         dist = DistToScene(camRay.pos, camRay.dir);
+		
         minDist = min(minDist, dist);
+
+        //camRay.dir += sin(cos(originalPos-sin(originalPos)))*0.005;
 
         if(dist >= maxDist)
             break;
 
-		if(dist < epsilon)
+        float optimizedDist = epsilon + (i*0.00025);
+
+		if(dist < optimizedDist)
         {
-            if(camRay.color.w > epsilon && camRay.bounces < maxBounces)
+            if(camRay.color.w > 0.001 && camRay.bounces < maxBounces)
             {
-                camRay.dir = reflect(camRay.dir, EstimateNormal(camRay));
-			    camRay.color = mix(camRay.color, vec4(sin(camRay.pos) + vec3(0.1,0.1,0.1),1), camRay.color.w);
-                camRay.color.w *= 0.5;
+                camRay.dir = reflect(camRay.dir, EstimateNormalCheap(camRay));
+			    camRay.color = mix(camRay.color, vec4((sin(camRay.pos) + vec3(0.1,0.1,0.1)),1), camRay.color.w);
+                camRay.color.w *= 0.25;
                 camRay.bounces++;
 
                 camRay.pos += camRay.dir * (dist + epsilon);
@@ -194,7 +226,7 @@ void main()
             }
 		}
 
-		camRay.pos += camRay.dir * dist;
+		camRay.pos += camRay.dir * max(dist, optimizedDist);
 	}
 
     //distance based fog
@@ -207,6 +239,9 @@ void main()
         //sky
         camRay.color = mix(camRay.color, GetSky(camRay), camRay.color.w);
     }
+	
+	//AO
+	camRay.color *= clamp(0.1,1, 0.9 + (minDist*10));
 
 	gl_FragColor = vec4(camRay.color.xyz, 1);
 }

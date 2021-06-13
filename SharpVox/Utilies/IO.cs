@@ -5,7 +5,7 @@ using System.Drawing.Imaging;
 using System.Text;
 using OpenTK.Graphics.OpenGL;
 
-namespace SharpVox.Utilies
+namespace SharpVox.Utilities
 {
     class IO
     {

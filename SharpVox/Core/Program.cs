@@ -42,6 +42,9 @@ namespace SharpVox.Core
                 else
                     World.CreateScene();
 
+                //Reset input
+                InputManager.Reset();
+
                 //Draw the scene
                 //if(window.HasFocus())
                 Renderer.Render(window);
@@ -67,6 +70,7 @@ namespace SharpVox.Core
                 window.MouseButtonPressed += InputManager.MouseButtonPressed;
                 window.MouseButtonReleased += InputManager.MouseButtonReleased;
                 window.MouseMoved += InputManager.MouseMoved;
+                window.MouseWheelScrolled += InputManager.MouseScrolled;
                 window.Resized += OnWindowResized;
                 window.Closed += OnWindowClosed;
                 window.SetVerticalSyncEnabled(true);
@@ -80,7 +84,7 @@ namespace SharpVox.Core
         /// <summary>
         /// Initialize the renderer.
         /// </summary>
-        static void InitRenderer()
+        public static void InitRenderer()
         {
             if (Renderer.screenShape == null)
             {

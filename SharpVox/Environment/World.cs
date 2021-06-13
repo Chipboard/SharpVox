@@ -21,6 +21,8 @@ namespace SharpVox.Environment
                 ActivateScene(ref newScene);
 
             new Graphics.Camera();
+            new Utilities.HotReload();
+            new Utilities.Screenshot();
             
             return newScene;
         }

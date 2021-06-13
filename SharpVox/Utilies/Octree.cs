@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SharpVox.Utilies
+namespace SharpVox.Utilities
 {
     class Octree
     {
