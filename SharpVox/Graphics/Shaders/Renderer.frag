@@ -7,6 +7,7 @@ uniform vec3 camUp;
 uniform sampler2D noiseTexture;
 uniform sampler2D skyTexture;
 uniform int frame;
+uniform float totalDeltaTime;
 
 const float c_goldenRatioConjugate = 0.61803398875;
 const float PI = 3.14159265359;
@@ -45,6 +46,18 @@ uniform ShapeData shapeHolder;
 
 vec3 Projection (vec2 p) {
   return normalize(vec3(p.x, p.y, 0));
+}
+
+vec4 triplanar( sampler2D sam, in vec3 p)
+{
+    vec4 x = texture( sam, p.yz )*0.33;
+    vec4 y = texture( sam, p.zx )*0.33;
+    vec4 z = texture( sam, p.xy )*0.33;
+    return x+y+z;
+}
+
+vec2 rotate(vec2 v, float a) {
+	return vec2(cos(a)*v.x + sin(a)*v.y, -sin(a)*v.x + cos(a)*v.y);
 }
 
 float SdSphere(vec3 p, vec3 center, float radius, vec3 dir)
@@ -116,6 +129,28 @@ float Map2( vec3 p, float s )
 	return 0.25*abs(p.y)/cscale;
 }
 
+#define Scale 4.0
+#define Offset vec3(0.92858,0.92858,0.32858)
+float Map3(vec3 z)
+{
+	// Folding 'tiling' of 3D space;
+	z  = abs(1.0-mod(z,2.0));
+
+	float d = 1000.0;
+	for (int n = 0; n < 7; n++) {
+		z.xy = rotate(z.xy,4.0+2.0*cos(totalDeltaTime * 0.01));		
+		z = abs(z);
+		if (z.x<z.y){ z.xy = z.yx;}
+		if (z.x< z.z){ z.xz = z.zx;}
+		if (z.y<z.z){ z.yz = z.zy;}
+		z = Scale*z-Offset*(Scale-1.0);
+		if( z.z<-0.5*Offset.z*(Scale-1.0))  z.z+=Offset.z*(Scale-1.0);
+		d = min(d, length(z) * pow(Scale, float(-n)-1.0));
+	}
+	
+	return d-0.001;
+}
+
 
 Ray CreateCamRay(vec2 uv, vec3 lookAt, float zoom)
 {
@@ -145,8 +180,10 @@ float DistToScene(vec3 pos, vec3 dir)
     //dist = min(dist, SdSphere(pos, vec3(0,0,0), 1, dir));
     //dist = min(dist, FracSphere(pos, 0.25));
     //dist = min(dist, OptSphere(pos, dir, 1));
+    //dist = mod(Map2(sin(pos), 1.525), 1) - 0.01;
+    //dist = Map(sin(pos * 0.777));
     //dist = Map2(pos, 1.525);
-    dist = Map(pos);
+    dist = Map3(pos);
 
     return dist;
 }
@@ -188,7 +225,7 @@ void main()
     float widthDifference = resolution.x - resolution.y;
 	vec2 uv = (gl_FragCoord.xy - 0.5 * resolution) / resolution.y;
 
-    // blue noise
+    //blue noise
     float startRayOffset = texture(noiseTexture, uv * frame / 1024.0f).r;
     startRayOffset = fract(startRayOffset + frame * c_goldenRatioConjugate)*0.0314;
 
@@ -206,6 +243,7 @@ void main()
         minDist = min(minDist, dist);
 
         //camRay.dir += sin(cos(originalPos-sin(originalPos)))*0.005;
+        //camRay.dir += normalize(sin(camRay.pos*0.1)-cos(camRay.pos*2.33))*0.005;
 
         if(dist >= maxDist)
             break;
@@ -216,9 +254,11 @@ void main()
         {
             if(camRay.color.w > 0.001 && camRay.bounces < maxBounces)
             {
-                camRay.dir = reflect(camRay.dir, EstimateNormalCheap(camRay) * (1 + (startRayOffset * 0.1)));
-			    camRay.color = mix(camRay.color, vec4((sin(camRay.pos) + vec3(0.1,0.1,0.1)),1), camRay.color.w);
-                camRay.color.w *= 0.25;
+                vec3 normal = EstimateNormalCheap(camRay);
+                camRay.dir = reflect(camRay.dir, normal * (1 + (startRayOffset) * 0.01));
+			    camRay.color = mix(camRay.color, vec4((sin(camRay.pos) + vec3(0.1,0.1,0.1)), camRay.color.w), camRay.color.w);
+                //camRay.color = mix(camRay.color, vec4(triplanar(skyTexture, normal + camRay.pos).xyz, camRay.color.w), camRay.color.w);
+                camRay.color.w *= 0.47;
                 camRay.bounces++;
 
                 camRay.pos += camRay.dir * (dist + epsilon);

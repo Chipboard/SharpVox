@@ -28,7 +28,7 @@ namespace SharpVox.Utilities
                     if (InputManager.GetKey(Keyboard.Key.LShift))
                     {
                         //High detail
-                        Renderer.renderPasses[0].renderStates.Shader.SetUniform("epsilon", 0.0001f);
+                        Renderer.renderPasses[0].renderStates.Shader.SetUniform("epsilon", 0.00025f);
                         Renderer.renderPasses[0].renderStates.Shader.SetUniform("maxBounces", 1000);
                         Renderer.renderPasses[0].renderStates.Shader.SetUniform("maxIterations", 2000);
                         Renderer.renderPasses[1].renderStates.Shader.SetUniform("blendFactor", 0.9f);
@@ -40,7 +40,7 @@ namespace SharpVox.Utilities
 
                         DoScreenshot();
 
-                        Renderer.renderPasses = null;
+                        Renderer.DisposeRenderPasses();
                         Program.InitRenderer();
                     } else
                     {

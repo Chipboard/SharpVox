@@ -77,6 +77,7 @@ namespace SharpVox.Graphics
             }
 
             SetUniform("frame", frame);
+            SetUniform("totalDeltaTime", Core.Program.totalDeltaTime);
             window.Display();
         }
 
@@ -85,6 +86,9 @@ namespace SharpVox.Graphics
         /// </summary>
         public static void AddPass(RenderPass pass)
         {
+            if (renderPasses == null)
+                renderPasses = new RenderPass[0];
+
             RenderPass[] newPasses = new RenderPass[renderPasses.Length + 1];
 
             for (int i = 0; i < renderPasses.Length; i++)
@@ -142,6 +146,11 @@ namespace SharpVox.Graphics
 
                 if (renderPasses[i].renderTexture != null)
                     renderPasses[i].renderTexture.Dispose();
+
+                for(int t = 0; t < renderPasses[i].Textures.Count; t++)
+                {
+                    renderPasses[i].Textures[i].Dispose();
+                }
             }
 
             renderPasses = null;
@@ -157,6 +166,7 @@ namespace SharpVox.Graphics
     {
         public RenderStates renderStates;
         public RenderTexture renderTexture;
+        public List<Texture> Textures = new List<Texture>();
         public int[] renderTextureCopy;
         public bool display;
 
@@ -196,6 +206,12 @@ namespace SharpVox.Graphics
             display = displayOnScreen;
             uniforms = null;
             renderTexture = null;
+        }
+
+        public void AddTextureUniform(string name, Texture t)
+        {
+            renderStates.Shader.SetUniform(name, t);
+            Textures.Add(t);
         }
 
         ~RenderPass()

@@ -14,6 +14,7 @@ namespace SharpVox.Core
         public static RenderWindow window;
         public static Clock deltaClock = new Clock();
         public static float deltaTime;
+        public static float totalDeltaTime;
 
         /// <summary>
         /// The main loop of this program.
@@ -50,6 +51,7 @@ namespace SharpVox.Core
                 Renderer.Render(window);
 
                 deltaTime = deltaClock.Restart().AsSeconds();
+                totalDeltaTime += deltaTime;
             }
         }
 
@@ -104,8 +106,6 @@ namespace SharpVox.Core
 
             if (Renderer.renderPasses == null)
             {
-                Renderer.renderPasses = new RenderPass[0];
-
                 //Main renderer
                 RenderPass rendererPass = new RenderPass(new RenderStates(new Shader(null, null, "Graphics/Shaders/Renderer.frag")),
                     new RenderTexture(window.Size.X, window.Size.Y),
@@ -113,10 +113,11 @@ namespace SharpVox.Core
                         new UniformData("camForward", UniformType.Vec3),
                         new UniformData("camRight", UniformType.Vec3),
                         new UniformData("camUp", UniformType.Vec3),
-                        new UniformData("frame", UniformType.Int)}, null, false);
+                        new UniformData("frame", UniformType.Int),
+                        new UniformData("totalDeltaTime", UniformType.Float)}, null, false);
 
-                rendererPass.renderStates.Shader.SetUniform("noiseTexture", new Texture("Graphics/Images/Noise/Noise.png") { Repeated = true, Smooth = false });
-                rendererPass.renderStates.Shader.SetUniform("skyTexture", new Texture("Graphics/Images/Sky/immenstadter_horn_8k.hdr") { Repeated = true, Smooth = true });
+                rendererPass.AddTextureUniform("skyTexture", new Texture("Graphics/Images/Sky/immenstadter_horn_8k.hdr") { Repeated = true, Smooth = true });
+                rendererPass.AddTextureUniform("noiseTexture", new Texture("Graphics/Images/Noise/Noise.png") { Repeated = true, Smooth = false });
                 rendererPass.renderStates.Shader.SetUniform("epsilon", 0.001f);
                 rendererPass.renderStates.Shader.SetUniform("maxBounces", 3);
                 rendererPass.renderStates.Shader.SetUniform("maxIterations", 250);
@@ -128,24 +129,26 @@ namespace SharpVox.Core
                 aliasingPass.renderStates.Shader.SetUniform("blendFactor", 0.33f);
                 Renderer.AddPass(aliasingPass);
 
+                //Denoise
+                RenderPass denoisePass = new RenderPass(new RenderStates(new Shader(null, null, "Graphics/Shaders/Denoise.frag")),
+                    new RenderTexture(window.Size.X, window.Size.Y), null, new int[] { 1 }, false);
+                Renderer.AddPass(denoisePass);
+
                 //Noise
                 RenderPass noisePass = new RenderPass(new RenderStates(new Shader(null, null, "Graphics/Shaders/Noise.frag")),
                     new RenderTexture(window.Size.X, window.Size.Y),
                     new UniformData[] { new UniformData("camForward", UniformType.Vec3),
-                    new UniformData("camPos", UniformType.Vec3)}, new int[] { 1 }, true);
+                    new UniformData("camPos", UniformType.Vec3)}, new int[] { 2 }, true);
                 noisePass.renderStates.Shader.SetUniform("noiseTexture", new Texture("Graphics/Images/Noise/Noise.png") { Repeated = true, Smooth = true });
                 Renderer.AddPass(noisePass);
-
-                //Shapes
-                //apeData shapeData = new ShapeData(new Sphere[10000]);
-                //nderer.renderPasses[0].renderStates.Shader.
-
             }
 
             Renderer.ResizeRenderPass(ref Renderer.renderPasses[0], window.Size.X, window.Size.Y);
             Renderer.ResizeRenderPass(ref Renderer.renderPasses[1], window.Size.X, window.Size.Y);
             Renderer.ResizeRenderPass(ref Renderer.renderPasses[2], window.Size.X, window.Size.Y);
+            Renderer.ResizeRenderPass(ref Renderer.renderPasses[3], window.Size.X, window.Size.Y);
             Renderer.RegisterUniform("frame", 0);
+            Renderer.RegisterUniform("totalDeltaTime", 0f);
         }
 
         /// <summary>
