@@ -11,11 +11,11 @@ uniform float totalDeltaTime;
 
 const float c_goldenRatioConjugate = 0.61803398875;
 const float PI = 3.14159265359;
-const float maxDist = 500;
 
 uniform int maxIterations;
 uniform int maxBounces;
 uniform float epsilon;
+uniform float maxDist;
 
 struct Ray {
     vec3 pos;
@@ -138,7 +138,7 @@ float Map3(vec3 z)
 
 	float d = 1000.0;
 	for (int n = 0; n < 7; n++) {
-		z.xy = rotate(z.xy,4.0+2.0*cos(totalDeltaTime * 0.01));		
+		z.xy = rotate(z.xy,4.0+2.0*cos(totalDeltaTime * 0.0025));		
 		z = abs(z);
 		if (z.x<z.y){ z.xy = z.yx;}
 		if (z.x< z.z){ z.xz = z.zx;}
@@ -149,6 +149,22 @@ float Map3(vec3 z)
 	}
 	
 	return d-0.001;
+}
+
+float Map4(vec3 z0){
+	vec4 c = vec4(z0,1.0),z = c;
+	float r = length(z.xyz),zr,zo,zi,p=8.0;
+	vec4 trap=vec4(z.xyz,r);
+	for (int n = 0; n < 9 && r<2.0; n++) {
+		zo = asin(z.z / r) * p-totalDeltaTime;
+		zi = atan(z.y, z.x) * p;
+		zr = pow(r, p-1.0);
+		z=zr*vec4(r*vec3(cos(zo)*vec2(cos(zi),sin(zi)),sin(zo)),z.w*p)+c;
+		r = length(z.xyz);
+		trap=vec4(z.xyz,r);
+	}
+	float d=min(0.5 * log(r) * r / z.w,z0.y+1.0);
+	return d;
 }
 
 
@@ -184,6 +200,8 @@ float DistToScene(vec3 pos, vec3 dir)
     //dist = Map(sin(pos * 0.777));
     //dist = Map2(pos, 1.525);
     dist = Map3(pos);
+    //dist = Map4(pos);
+    //dist = min(Map2(pos*0.9,1.525), Map(mod(pos*0.1, 1)));
 
     return dist;
 }
@@ -226,16 +244,17 @@ void main()
 	vec2 uv = (gl_FragCoord.xy - 0.5 * resolution) / resolution.y;
 
     //blue noise
-    float startRayOffset = texture(noiseTexture, uv * frame / 1024.0f).r;
-    startRayOffset = fract(startRayOffset + frame * c_goldenRatioConjugate)*0.0314;
+    float blueNoise = texture(noiseTexture, uv * frame + 10000 / 1024.0f).r;
+    blueNoise = fract(blueNoise + frame * c_goldenRatioConjugate)*0.00314;
 
 	Ray camRay = CreateCamRay(uv, vec3(0,0,0), 1);
-    vec3 originalPos = camRay.pos;
-    camRay.pos += camRay.dir * (startRayOffset + epsilon);
+    //vec3 originalPos = camRay.pos;
+    camRay.pos += camRay.dir * blueNoise;
 
     bool hit = false;
     float dist = maxDist;
     float minDist = maxDist;
+    float totalTravelDist = 0;
 	for(int i = 0; i < maxIterations; i++)
 	{		
         dist = DistToScene(camRay.pos, camRay.dir);
@@ -245,17 +264,16 @@ void main()
         //camRay.dir += sin(cos(originalPos-sin(originalPos)))*0.005;
         //camRay.dir += normalize(sin(camRay.pos*0.1)-cos(camRay.pos*2.33))*0.005;
 
-        if(dist >= maxDist)
+        if(totalTravelDist >= maxDist)
             break;
 
-        float optimizedDist = epsilon + (i*0.00025);
-
-		if(dist < optimizedDist)
+		if(dist < epsilon + max(0, pow(totalTravelDist / 2, 0.02) - 1))
         {
             if(camRay.color.w > 0.001 && camRay.bounces < maxBounces)
             {
                 vec3 normal = EstimateNormalCheap(camRay);
-                camRay.dir = reflect(camRay.dir, normal * (1 + (startRayOffset) * 0.01));
+                camRay.dir = reflect(camRay.dir, normal * (1 + (blueNoise) * 0.01));
+                //camRay.dir = reflect(camRay.dir, normal);
 			    camRay.color = mix(camRay.color, vec4((sin(camRay.pos) + vec3(0.1,0.1,0.1)), camRay.color.w), camRay.color.w);
                 //camRay.color = mix(camRay.color, vec4(triplanar(skyTexture, normal + camRay.pos).xyz, camRay.color.w), camRay.color.w);
                 camRay.color.w *= 0.47;
@@ -268,7 +286,8 @@ void main()
             }
 		}
 
-		camRay.pos += camRay.dir * max(dist, optimizedDist);
+        totalTravelDist += dist;
+		camRay.pos += camRay.dir * dist;
 	}
 
     //distance based fog

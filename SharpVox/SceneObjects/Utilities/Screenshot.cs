@@ -28,6 +28,7 @@ namespace SharpVox.Utilities
                     if (InputManager.GetKey(Keyboard.Key.LShift))
                     {
                         //High detail
+                        Renderer.renderPasses[0].renderStates.Shader.SetUniform("maxDist", 1000f);
                         Renderer.renderPasses[0].renderStates.Shader.SetUniform("epsilon", 0.00025f);
                         Renderer.renderPasses[0].renderStates.Shader.SetUniform("maxBounces", 1000);
                         Renderer.renderPasses[0].renderStates.Shader.SetUniform("maxIterations", 2000);

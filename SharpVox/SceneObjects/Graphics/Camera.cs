@@ -68,7 +68,7 @@ namespace SharpVox.Graphics
             }
 
             if(InputManager.mouseScroll != 0)
-                camSpeed = Math.Clamp(camSpeed + (InputManager.mouseScroll * 0.1f), 0, 10);
+                camSpeed = Math.Clamp(camSpeed + (InputManager.mouseScroll * (0.01f + MathF.Pow(MathF.PI, camSpeed) * 0.01f)), 0.001f, 10);
 
             Renderer.SetUniform("camPos", position);
             Renderer.SetUniform("camForward", forward);

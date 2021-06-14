@@ -118,8 +118,9 @@ namespace SharpVox.Core
 
                 rendererPass.AddTextureUniform("skyTexture", new Texture("Graphics/Images/Sky/immenstadter_horn_8k.hdr") { Repeated = true, Smooth = true });
                 rendererPass.AddTextureUniform("noiseTexture", new Texture("Graphics/Images/Noise/Noise.png") { Repeated = true, Smooth = false });
-                rendererPass.renderStates.Shader.SetUniform("epsilon", 0.001f);
-                rendererPass.renderStates.Shader.SetUniform("maxBounces", 3);
+                rendererPass.renderStates.Shader.SetUniform("epsilon", 0.0005f);
+                rendererPass.renderStates.Shader.SetUniform("maxDist", 250f);
+                rendererPass.renderStates.Shader.SetUniform("maxBounces", 2);
                 rendererPass.renderStates.Shader.SetUniform("maxIterations", 250);
                 Renderer.AddPass(rendererPass);
 
