@@ -199,8 +199,8 @@ float DistToScene(vec3 pos, vec3 dir)
     //dist = mod(Map2(sin(pos), 1.525), 1) - 0.01;
     //dist = Map(sin(pos * 0.777));
     //dist = Map2(pos, 1.525);
-    dist = Map3(pos);
-    //dist = Map4(pos);
+    //dist = Map3(pos);
+    dist = Map4(pos);
     //dist = min(Map2(pos*0.9,1.525), Map(mod(pos*0.1, 1)));
 
     return dist;
@@ -267,7 +267,7 @@ void main()
         if(totalTravelDist >= maxDist)
             break;
 
-		if(dist < epsilon + max(0, pow(totalTravelDist / 2, 0.02) - 1))
+		if(dist < epsilon + (totalTravelDist * 0.0015))
         {
             if(camRay.color.w > 0.001 && camRay.bounces < maxBounces)
             {
@@ -276,7 +276,7 @@ void main()
                 //camRay.dir = reflect(camRay.dir, normal);
 			    camRay.color = mix(camRay.color, vec4((sin(camRay.pos) + vec3(0.1,0.1,0.1)), camRay.color.w), camRay.color.w);
                 //camRay.color = mix(camRay.color, vec4(triplanar(skyTexture, normal + camRay.pos).xyz, camRay.color.w), camRay.color.w);
-                camRay.color.w *= 0.47;
+                camRay.color.w *= 0.25;
                 camRay.bounces++;
 
                 camRay.pos += camRay.dir * (dist + epsilon);
@@ -303,6 +303,9 @@ void main()
 	
 	//AO
 	camRay.color *= clamp(0.1,1, 0.9 + (minDist*10));
+
+    //Fog
+    //camRay.color = mix(camRay.color, vec4(0,0,0,0), clamp(0,1, totalTravelDist * 0.01789));
 
 	gl_FragColor = vec4(camRay.color.xyz, 1);
 }

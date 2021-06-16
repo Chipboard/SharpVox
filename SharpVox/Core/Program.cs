@@ -5,7 +5,7 @@ using SFML.Graphics;
 using SharpVox.Graphics;
 using SharpVox.Environment;
 using SharpVox.Input;
-using OpenTK.Windowing.Desktop;
+using OpenTK;
 
 namespace SharpVox.Core
 {
@@ -118,10 +118,10 @@ namespace SharpVox.Core
 
                 rendererPass.AddTextureUniform("skyTexture", new Texture("Graphics/Images/Sky/immenstadter_horn_8k.hdr") { Repeated = true, Smooth = true });
                 rendererPass.AddTextureUniform("noiseTexture", new Texture("Graphics/Images/Noise/Noise.png") { Repeated = true, Smooth = false });
-                rendererPass.renderStates.Shader.SetUniform("epsilon", 0.0005f);
-                rendererPass.renderStates.Shader.SetUniform("maxDist", 250f);
+                rendererPass.renderStates.Shader.SetUniform("epsilon", 0.00015f);
+                rendererPass.renderStates.Shader.SetUniform("maxDist", 200f);
                 rendererPass.renderStates.Shader.SetUniform("maxBounces", 2);
-                rendererPass.renderStates.Shader.SetUniform("maxIterations", 250);
+                rendererPass.renderStates.Shader.SetUniform("maxIterations", 150);
                 Renderer.AddPass(rendererPass);
 
                 //Anti Aliasing
