@@ -6,7 +6,7 @@ uniform vec2 resolution;
 
 void main() 
 { 
-  vec2 uv = gl_FragCoord / resolution;
+  vec2 uv = gl_FragCoord.xy / resolution;
 
   vec4 noise = texture(noiseTexture, uv + ((camForward.xy + camPos.xy + camForward.yx + camPos.yz) * 100));
 

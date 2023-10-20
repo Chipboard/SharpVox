@@ -64,6 +64,6 @@ vec4 smartDeNoise(sampler2D tex, vec2 uv, float sigma, float kSigma, float thres
 
 void main()
 {
-    vec2 uv = gl_FragCoord / resolution;
+    vec2 uv = gl_FragCoord.xy / resolution;
     gl_FragColor = smartDeNoise(renderTexture0, uv, 1, 1, 1);
 }

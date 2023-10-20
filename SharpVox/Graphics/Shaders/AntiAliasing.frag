@@ -45,7 +45,7 @@ vec4 sampleJitter(vec2 uv, int it, float spread)
 
 void main() 
 { 
-  vec2 uv = gl_FragCoord / resolution;
+  vec2 uv = gl_FragCoord.xy / resolution;
 
   //Edge detection
   		vec4 n[9];

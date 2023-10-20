@@ -200,7 +200,7 @@ float DistToScene(vec3 pos, vec3 dir)
     //dist = Map(sin(pos * 0.777));
     //dist = Map2(pos, 1.525);
     //dist = Map3(pos);
-    dist = Map4(pos);
+    //dist = Map4(pos);
     //dist = min(Map2(pos*0.9,1.525), Map(mod(pos*0.1, 1)));
 
     return dist;
